@@ -1,32 +1,69 @@
-const { MongoClient } = require('mongodb');
-require('dotenv').config(); // For environment variables
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
 
-const username = "Vimal_krishna"; // Your actual MongoDB username
-const password = encodeURIComponent("your_password_here"); // Replace with your password (URL-encoded if needed)
-const dbName = "your_database_name"; // Change to your database name
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const uri = `mongodb+srv://${username}:${password}@cbs.nxxx9.mongodb.net/${dbName}?retryWrites=true&w=majority&appName=CBS`;
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("MongoDB Connection Failed:", err));
 
-const client = new MongoClient(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+// Define Post Schema
+const PostSchema = new mongoose.Schema({
+  username: String,
+  text: String,
+  image: String,
+  likes: Number,
+  comments: [String],
 });
 
-async function connectDB() {
-    try {
-        await client.connect();
-        console.log("✅ Connected to MongoDB Atlas!");
+const Post = mongoose.model("Post", PostSchema);
 
-        const db = client.db(dbName); // Get database reference
-        const collection = db.collection("testCollection"); // Example collection
+// Routes
+app.get("/posts", async (req, res) => {
+  const posts = await Post.find();
+  res.json(posts);
+});
 
-        // Example: Insert test document
-        const result = await collection.insertOne({ message: "Hello from MongoDB!" });
-        console.log("✅ Test document inserted:", result.insertedId);
+app.post("/posts", async (req, res) => {
+  const { username, text, image } = req.body;
+  const newPost = new Post({ username, text, image, likes: 0, comments: [] });
+  await newPost.save();
+  res.json(newPost);
+});
 
-    } catch (err) {
-        console.error("❌ MongoDB connection error:", err);
-    }
-}
+app.post("/posts/:id/comment", async (req, res) => {
+  const { id } = req.params;
+  const { comment } = req.body;
 
-connectDB(); // Call the function to connect to MongoDB
+  const bullyingWords = ["stupid", "idiot", "dumb", "loser"];
+  if (bullyingWords.some((word) => comment.toLowerCase().includes(word))) {
+    return res.status(400).json({ error: "Your comment contains inappropriate words." });
+  }
+
+  const post = await Post.findById(id);
+  if (!post) return res.status(404).json({ error: "Post not found" });
+
+  post.comments.push(comment);
+  await post.save();
+  res.json(post);
+});
+
+app.post("/posts/:id/like", async (req, res) => {
+  const { id } = req.params;
+  const post = await Post.findById(id);
+  if (!post) return res.status(404).json({ error: "Post not found" });
+
+  post.likes += 1;
+  await post.save();
+  res.json(post);
+});
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
