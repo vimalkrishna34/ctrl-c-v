@@ -1,0 +1,15 @@
+.emoji-list {
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .emoji-list span {
+    padding: 5px;
+    transition: transform 0.2s ease;
+  }
+  
+  .emoji-list span:hover {
+    transform: scale(1.2);
+  }

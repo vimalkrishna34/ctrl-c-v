@@ -1,0 +1,30 @@
+@import "tailwindcss";
+.app {
+  display: flex;
+  justify-content: center;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+}
+
+.app__container {
+  display: flex;
+  width: 80%;
+  max-width: 1200px;
+  margin-top: 20px;
+}
+
+.app__container > * {
+  flex: 1;
+}
+
+.sidebar {
+  flex: 0.25;
+}
+
+.feeds {
+  flex: 0.5;
+}
+
+.friends {
+  flex: 0.25;
+}
